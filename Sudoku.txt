@@ -1,0 +1,56 @@
+;;; COMP 5361: Programming Assignment 2
+;;; Submitted by Camille Gagné 27178387
+
+
+(defvar board #2a((0 2 4 o) ;;Creates a 4x4 2 dimensional array
+                  (1 0 0 3)
+                  (4 0 0 2)
+                  (0 1 3 0)))
+              
+(defconstant board-size 4) ;; Defines board size
+(defconstant block-size 2) ;; Defines block size
+(defconstant empty      0) ;; Defines default value of a cell
+
+(defun sudoku (index)
+  "Gos through all the cells"
+  (let ((row (truncate (/ index board-size)))     ;; let = binds elements 
+        (col (mod index board-size)))
+    (if (not (array-in-bounds-p board row col))   ;;array-in-bounds-p = boolean; defines if integer is in bound (a part of) of the array
+        t
+        (if (/= (aref board row col) empty)       ;;if false, then empty index
+            (sudoku (1+ index))
+            (loop for i from 1 to board-size      ;; Test all numbers from 1 to 4
+              do (and (verify i row col)
+                      (progn                      ;;evaluates all element and returns the last one
+                        (setf (aref board row col) i)  ;;accesses array elements 
+                        (and (sudoku (1+ index)) (return t))))  
+              finally (progn
+                        (setf (aref board row col) empty) 
+                        (return nil)))))))
+
+
+
+;;; Verify if a number can be in the position its in by looking at every spot
+;;; identified by row and column indexes
+(defun verify (num row col)
+  (let ((r (* (truncate (/ row block-size)) block-size))     ;;Start verification at top left of the board
+        (c (* (truncate (/ col block-size)) block-size)))
+    (dotimes (i board-size t)
+      (and (or (= num (aref board row i)) ;;Verifies if number in row = another number in row
+               (= num (aref board i col)) ;;Verifies if number in column = another number in column
+               (= num (aref board (+ r (mod i block-size)) ;;;;Verifies if number in block = another number in block
+                                  (+ c (truncate (/ i block-size))))))
+           (return nil)))))
+
+
+;;;Function to print the sudoku
+(defun print-board ()
+  (dotimes (r board-size) ;; loop that = size of the board
+    (format t "~% --- --- --- --- ~%|")
+    (dotimes (c board-size)
+      (format t " ~A |" (aref board r c))))
+  (format t "~% --- --- --- ---~%~%"))
+
+
+(and (or (sudoku 0) (format t "Initial setup unsolvable")) ;;#4
+     (print-board))
